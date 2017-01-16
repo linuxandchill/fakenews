@@ -47,6 +47,7 @@ class App extends Component {
     this.fetchSearchTopStories= this.fetchSearchTopStories.bind(this);
     this.onDismiss = this.onDismiss.bind(this); 
     this.onSearchChange = this.onSearchChange.bind(this); 
+    this.onSearchSubmit = this.onSearchSubmit.bind(this); 
   }
 
   setSearchTopStories(result){
@@ -59,6 +60,11 @@ class App extends Component {
     .then(result => this.setSearchTopStories(result))
   }
 
+  onSearchSubmit(){
+    const {searchTerm} = this.state;
+    this.fetchSearchTopStories(searchTerm); 
+  }
+
   componentDidMount(){
     const {searchTerm} = this.state;
     this.fetchSearchTopStories(searchTerm);
@@ -69,52 +75,66 @@ class App extends Component {
       return item.objectID !== id;
     }
 
-    const updatedList = this.state.list.filter(isNotId); 
+    const updatedHits = this.state.result.hits.filter(isNotId); 
 
-    this.setState({list: updatedList}); 
+    this.setState({
+      result: { ...this.state.result, hits: updatedHits }
+    }); 
   }
-
 
   onSearchChange(e){
     this.setState({searchTerm: e.target.value})
   }
 
   render() {
+    console.log(this.state)
     const { searchTerm, result} = this.state; 
-    if(!result) {return null;}
     return (
       <div className="page">
       <div className="interactions">
-      <Search 
-      value={searchTerm} 
-      onChange={this.onSearchChange}
-      > Search
+        <Search 
+        value={searchTerm} 
+        onChange={this.onSearchChange}
+        onSubmit={this.onSearchSubmit}
+        > Search
 
-      </Search> 
-      </div>
+        </Search> 
+        </div>
 
-      <Table 
-      list={result.hits}  
-      onDismiss={this.onDismiss}
-      pattern={searchTerm}
-      /> 
+        {/* everything else is visible when making api fetch */}
+        { result 
+          ?
+            <Table 
+            list={result.hits}  
+            pattern={searchTerm}
+            onDismiss={this.onDismiss}
+            /> 
+          : 
+            null
+        }
+          
       </div>
     );
   }
 }
 
-const Search = ({value, onChange, children}) => {
+//Search Component
+const Search = ({value, onChange, children, onSubmit}) => {
   return(
-    <form> 
-    {children}<input 
-    type="text"
-    value={value}
-    onChange={onChange}
-    /> 
+    <form onSubmit={onSubmit}> 
+      <input 
+      type="text"
+      value={value}
+      onChange={onChange}
+      /> 
+      <button type="submit"> 
+        {children} 
+      </button>
     </form> 
   )
 }
 
+//Table Component
 const Table = ({ list, pattern, onDismiss }) =>
     <div className="table">
     { list.filter(isSearched(pattern)).map(item =>
@@ -143,6 +163,7 @@ const Table = ({ list, pattern, onDismiss }) =>
     )}
 </div>
 
+//Button component
 const Button = ({onClick, className = '', children}) => {
   return(
     <button 
