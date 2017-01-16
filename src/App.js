@@ -1,38 +1,24 @@
 import React, { Component } from 'react';
 import './App.css';
 
-const list = [
-  {
-    title: 'React',
-    url: 'https://facebook.github.io/react/',
-    author: 'Jordan Walke',
-    num_comments: 3,
-    points: 4,
-    objectID: 0,
-  },
-  {
-    title: 'lalala',
-    url: 'https://github.com/reactjs/redux',
-    author: 'Dan Abramov, Andrew Clark',
-    num_comments: 2,
-    points: 5,
-    objectID: 1,
-  },
-]
 
 const DEFAULT_QUERY = 'redux';
+const DEFAULT_PAGE = 0; 
 const PATH_BASE = 'https://hn.algolia.com/api/v1';
 const PATH_SEARCH = '/search';
 const PARAM_SEARCH = 'query=';
+const PARAM_PAGE = 'page='; 
 
 var url = `${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${DEFAULT_QUERY}`;
 
+/* for client-side filtering
 function isSearched(searchTerm){
   return function(item){
     //condition that returns true or false
     return !searchTerm || item.title.toLowerCase().includes(searchTerm.toLowerCase()); 
   }
 }
+*/ 
 
 class App extends Component {
   constructor(props){
@@ -54,20 +40,21 @@ class App extends Component {
     this.setState({result}); 
   }
 
-  fetchSearchTopStories(searchTerm){
-    fetch(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}`)
+  componentDidMount(){
+    const {searchTerm} = this.state;
+    this.fetchSearchTopStories(searchTerm, DEFAULT_PAGE);
+  }
+
+  fetchSearchTopStories(searchTerm, page){
+    fetch(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}&${PARAM_PAGE}`)
     .then(response => response.json())
     .then(result => this.setSearchTopStories(result))
   }
 
-  onSearchSubmit(){
+  onSearchSubmit(event){
     const {searchTerm} = this.state;
     this.fetchSearchTopStories(searchTerm); 
-  }
-
-  componentDidMount(){
-    const {searchTerm} = this.state;
-    this.fetchSearchTopStories(searchTerm);
+    event.preventDefault(); 
   }
 
   onDismiss(id){
@@ -137,7 +124,7 @@ const Search = ({value, onChange, children, onSubmit}) => {
 //Table Component
 const Table = ({ list, pattern, onDismiss }) =>
     <div className="table">
-    { list.filter(isSearched(pattern)).map(item =>
+    { list.map(item =>
     <div key={item.objectID} className="table-row">
     <span style={{ width: '40%' }}>
     <a href={item.url}>{item.title}</a>
